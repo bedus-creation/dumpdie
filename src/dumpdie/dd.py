@@ -1,6 +1,7 @@
 import os
 import traceback
 from datetime import date, datetime
+from decimal import Decimal
 from inspect import getmembers, ismethod
 
 
@@ -75,6 +76,9 @@ def dump(val, space=0, indent: int = 0, end='', depth=0):
             print_key(val.strftime("%Y-%m-%d"), indent * 2, end=end)
         case datetime():
             print_key(val.strftime("%Y-%m-%d %H:%M:%S"), indent * 2, end=end)
+        case Decimal():
+            print_key(str(val), indent * 2, end=end)
+            print_dd_info() if indent == 0 else print('', end=end)
         case object():
             print_object(val, indent, depth=depth)
 
@@ -83,7 +87,14 @@ def print_object(val, indent: int = 0, depth: int = 0):
     class_name = type(val).__name__
     print_string(class_name, space=min(1, indent), end='', wrap=False)
     print_const('^', space=0, end='')
-    members = {n: m for n, m in val.__dict__.items() if not callable(m) and not ismethod(m)}
+    
+    # Safely get members, handling objects without __dict__ (like Decimal or those with __slots__)
+    if hasattr(val, '__dict__'):
+        members = {n: m for n, m in val.__dict__.items() if not callable(m) and not ismethod(m)}
+    else:
+        # Fallback to getmembers if __dict__ is missing, filtering out internals and methods
+        members = {n: m for n, m in getmembers(val) if not n.startswith('__') and not callable(m) and not ismethod(m)}
+
     if not members and indent > 0:
         print_const('{}', space=1, end='\n')
         return
