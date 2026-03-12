@@ -1,5 +1,5 @@
 [project]
-name = "dd_tmgbedu"
+name = "peek"
 description="The missing `dd` function in python."
 readme = "README.md"
 version = "0.1.1"
@@ -12,6 +12,20 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "setuptools>=75.8.2",
+    "twine>=6.1.0",
+    "bumpversion>=0.6.0",
+    "masonite-orm",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project.urls]
 Homepage = "https://github.com/bedus-creation/python_dd"

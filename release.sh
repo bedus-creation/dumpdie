@@ -7,13 +7,13 @@ if [ -z "$1" ]; then
 fi
 
 # Run bumpversion with the argument provided (e.g., patch, minor, major)
-bumpversion $1
+uv run bumpversion $1
 
 # Clean the dist directory
 rm -f -r dist/*
 
 # Build the package
-python3 -m build
+uv build
 
 # Upload to PyPI using twine
-twine upload dist/*
+uv run twine upload dist/*

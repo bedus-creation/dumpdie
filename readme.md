@@ -6,14 +6,14 @@ The missing `dd` function in python. The `dd` function is abbreviation of die an
 
 
 ## Installation
-```
-pip install python_dd
+```bash
+uv add peek
 ```
 
 ### Uses
 
 ```python
-from src.dd_tmgbedu.dd import dd
+from peek.dd import dd
 
 dd("Hello")
 dd(1)
@@ -23,7 +23,7 @@ dd(True, True, False, 1, 2)
 or
 
 ```python
-from src.dd_tmgbedu.dd import dump
+from peek.dd import dump
 
 dump("Hello")
 dump(1)

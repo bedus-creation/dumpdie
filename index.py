@@ -1,7 +1,34 @@
 from datetime import datetime
 
-from src.dd_tmgbedu.dd import dd, dump
+from peek.dd import dd, dump
 
+import sys
+from unittest.mock import MagicMock
+
+from masoniteorm.models import Model
+
+Model.boot = lambda self: None
+
+
+class Category(Model):
+    __fillable__ = ['name', 'parent']
+
+
+# Create a recursive structure
+root = Category()
+root.name = "Electronics"
+
+child = Category()
+child.name = "Smartphones"
+child.parent = root
+
+# Introduce a cycle for testing recursion handling
+root.parent = child
+
+dump(root)
+
+
+# dd(range(0, 5))
 
 class Permission:
     def __init__(self, name):
@@ -46,17 +73,24 @@ dump([1, 2, 3, 4])
 dump(("mouse", [8, 4, 6], (1, 2, 3)))
 dump({
     "apple": "banana",
-    "banana": "cherry",
-    "cherry": "apple",
-    'dog': {
-        'color': 'green',
-        'size': 'large',
-        'category': {
-            'apple': 'apple',
-            'banana': 'banana',
+    "empty_dict": {},
+    "empty_list": [],
+    "dog": {
+        "color": "green",
+        "size": "large",
+        "category": {
+            "apple": "apple",
+            "banana": "banana",
         }
     }
 })
+
+
+class Empty:
+    pass
+
+
+dump(Empty())
 dump(User())
 dump(None)
 # dd(range(0, 5))

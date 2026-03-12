@@ -63,9 +63,9 @@ def dump(val, space=0, indent: int = 0, end='', depth=0):
         case dict():
             print_dict(val, space, indent, depth=depth)
         case list():
-            print_list(val, indent)
+            print_list(val, space, indent)
         case tuple():
-            print_list(val, indent)
+            print_list(val, space, indent)
         case float():
             print_key(val, indent * 2, '')
             print_dd_info() if indent == 0 else print('', end=end)
@@ -83,27 +83,35 @@ def print_object(val, indent: int = 0, depth: int = 0):
     class_name = type(val).__name__
     print_string(class_name, space=min(1, indent), end='', wrap=False)
     print_const('^', space=0, end='')
+    members = {n: m for n, m in val.__dict__.items() if not callable(m) and not ismethod(m)}
+    if not members and indent > 0:
+        print_const('{}', space=1, end='\n')
+        return
+
     print_const('{', space=1, end='')
     # print_comment('#' + hex(id(val)), space=0, end='\n')
     print_dd_info() if indent == 0 else print('', end='\n')
-    for _name, member in val.__dict__.items():
-        if not callable(member) and not ismethod(member):
-            symbol = '+'
-            if _name.startswith(f'_{class_name}'):
-                symbol = '-'
-                _name = _name.replace(f'_{class_name}', '')
-            elif _name.startswith('_'):
-                symbol = '#'
-            print_const(symbol, indent * 2 + 2, end='')
-            print_property(_name, 0, '')
-            print_const(':', 0)
-            dump(member, 1, indent=indent + 1, end='\n', depth=depth)
+    for _name, member in members.items():
+        symbol = '+'
+        if _name.startswith(f'_{class_name}'):
+            symbol = '-'
+            _name = _name.replace(f'_{class_name}', '')
+        elif _name.startswith('_'):
+            symbol = '#'
+        print_const(symbol, indent * 2 + 2, end='')
+        print_property(_name, 0, '')
+        print_const(':', 0)
+        dump(member, 1, indent=indent + 1, end='\n', depth=depth)
 
     print_const('}', space=indent * 2, end='\n')
 
 
-def print_list(val: list | tuple, indent: int = 0):
-    print_string(type(val).__name__ + ':' + str(len(val)), space=indent, end='', wrap=False)
+def print_list(val: list | tuple, space: int = 0, indent: int = 0):
+    print_string(type(val).__name__ + ':' + str(len(val)), space=min(1, indent), end='', wrap=False)
+    if len(val) == 0 and indent > 0:
+        print_const(' []', space=0, end='\n')
+        return
+
     print_const('[', space=1, end='')
     print_dd_info() if indent == 0 else print('', end='\n')
     for item in range(len(val)):
@@ -116,14 +124,17 @@ def print_list(val: list | tuple, indent: int = 0):
 
 def print_dict(val: dict, space=0, indent: int = 0, depth: int = 0):
     print_string(type(val).__name__, space=min(1, indent), end='', wrap=False)
+    if len(val) == 0 and indent > 0:
+        print_const('{}', space=1, end='\n')
+        return
+
     print_const('{', space=1, end='')
 
     if indent == 0:
         print_dd_info()
-    elif len(val) > 0:
-        print('', end='\n')
     else:
-        print('', end='')
+        print('', end='\n')
+
     for key, value in val.items():
         print_string(key, indent * 2 + 2, end='')
         print_const(':', 0)
