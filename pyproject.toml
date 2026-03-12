@@ -2,7 +2,7 @@
 name = "dumpdie"
 description="The missing `dd` function in python."
 readme = "README.md"
-version = "0.1.1"
+version = "1.0.0"
 authors = [
     { name = "Bedram Tamang", email = "tmgbedu@gmail.com" },
 ]
