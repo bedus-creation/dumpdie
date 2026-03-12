@@ -1,5 +1,5 @@
 [project]
-name = "peek"
+name = "dumpdie"
 description="The missing `dd` function in python."
 readme = "README.md"
 version = "0.1.1"

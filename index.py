@@ -1,11 +1,8 @@
 from datetime import datetime
 
-from peek.dd import dd, dump
-
-import sys
-from unittest.mock import MagicMock
-
 from masoniteorm.models import Model
+
+from dumpdie.dd import dump
 
 Model.boot = lambda self: None
 
