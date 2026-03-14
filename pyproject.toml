@@ -1,3 +1,25 @@
+[tool.bumpversion]
+current_version = "1.0.2"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+tag = true
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+allow_dirty = false
+commit = true
+message = "Bump version: {current_version} → {new_version}"
+commit_args = ""
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
 [project]
 name = "dumpdie"
 description="The missing `dd` function in python."
@@ -19,9 +41,9 @@ dev = [
     "pytest>=8.3.5",
     "setuptools>=75.8.2",
     "twine>=6.1.0",
-    "bumpversion>=0.6.0",
     "masonite-orm",
     "pytest-env>=1.6.0",
+    "bump-my-version>=1.2.7",
 ]
 
 [build-system]
