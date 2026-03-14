@@ -21,6 +21,7 @@ dev = [
     "twine>=6.1.0",
     "bumpversion>=0.6.0",
     "masonite-orm",
+    "pytest-env>=1.6.0",
 ]
 
 [build-system]
