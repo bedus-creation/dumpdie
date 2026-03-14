@@ -1,5 +1,6 @@
 import os
 import traceback
+import types
 from datetime import date, datetime
 from decimal import Decimal
 from inspect import getmembers, ismethod
@@ -23,8 +24,13 @@ def print_const(val, space: int = 0, end=''):
     print(space + color + val + color, end=end)
 
 
-def print_string(val: str, space=0, end='\n', wrap: bool = True):
+def print_string(val: str | bytes, space=0, end='\n', wrap: bool = True):
     space = space * 1 * ' '
+    if isinstance(val, bytes):
+        val = val.decode('utf-8', errors='replace')
+    else:
+        val = str(val)
+    val = val.encode('utf-8', errors='replace').decode('utf-8')
     quote = '\033[038;5;208m"' if wrap else ''
     val = '\033[0;38;5;113m' + val + '\033[m'
     print(space + quote + val + quote, end=end)
@@ -49,24 +55,50 @@ def print_dd_info():
     print_comment(f' // {filename}:{str(lineno)}', 0, '\n')
 
 
-def dump(val, space=0, indent: int = 0, end='', depth=0):
+def dump(val, space=0, indent: int = 0, end='', depth=0, visited=None):
+    if visited is None:
+        visited = set()
+    
     depth = depth + 1
     if depth > 15:
         print_string("...", space, os.linesep)
         return
+
+    # Tracking visited objects to prevent circular references (only for objects that are NOT primitives)
+    if not isinstance(val, (int, float, str, bytes, bool, type(None), date, datetime, Decimal)):
+        if id(val) in visited:
+            print_comment(f"*recursion* {type(val).__name__}", space, os.linesep)
+            return
+        visited.add(id(val))
+
     match val:
+        case types.ModuleType():
+            print_string(str(val), space, '')
+            print_dd_info() if indent == 0 else print('', end=end)
+        case type():
+            print_string(str(val), space, '')
+            print_dd_info() if indent == 0 else print('', end=end)
+        case types.FunctionType() | types.MethodType() | types.BuiltinFunctionType() | types.BuiltinMethodType():
+            print_string(str(val), space, '')
+            print_dd_info() if indent == 0 else print('', end=end)
+        case Exception():
+            print_string(f"{type(val).__name__}: {str(val)}", space, '')
+            print_dd_info() if indent == 0 else print('', end=end)
         case int():
             print_key(val, space, '')
             print_dd_info() if indent == 0 else print('', end=end)
         case str():
             print_string(val, space, '')
             print_dd_info() if indent == 0 else print('', end=end)
+        case bytes():
+            print_string(val, space, '')
+            print_dd_info() if indent == 0 else print('', end=end)
         case dict():
-            print_dict(val, space, indent, depth=depth)
+            print_dict(val, space, indent, depth=depth, visited=visited)
         case list():
-            print_list(val, space, indent)
+            print_list(val, space, indent, depth=depth, visited=visited)
         case tuple():
-            print_list(val, space, indent)
+            print_list(val, space, indent, depth=depth, visited=visited)
         case float():
             print_key(val, indent * 2, '')
             print_dd_info() if indent == 0 else print('', end=end)
@@ -80,20 +112,34 @@ def dump(val, space=0, indent: int = 0, end='', depth=0):
             print_key(str(val), indent * 2, end=end)
             print_dd_info() if indent == 0 else print('', end=end)
         case object():
-            print_object(val, indent, depth=depth)
+            print_object(val, indent, depth=depth, visited=visited)
 
 
-def print_object(val, indent: int = 0, depth: int = 0):
+def print_object(val, indent: int = 0, depth: int = 0, visited=None):
     class_name = type(val).__name__
     print_string(class_name, space=min(1, indent), end='', wrap=False)
     print_const('^', space=0, end='')
     
     # Safely get members, handling objects without __dict__ (like Decimal or those with __slots__)
+    members = {}
     if hasattr(val, '__dict__'):
-        members = {n: m for n, m in val.__dict__.items() if not callable(m) and not ismethod(m)}
+        for n, m in val.__dict__.items():
+            try:
+                if not callable(m) and not ismethod(m):
+                    members[n] = m
+            except Exception:
+                continue
     else:
         # Fallback to getmembers if __dict__ is missing, filtering out internals and methods
-        members = {n: m for n, m in getmembers(val) if not n.startswith('__') and not callable(m) and not ismethod(m)}
+        try:
+            for n, m in getmembers(val):
+                try:
+                    if not n.startswith('__') and not callable(m) and not ismethod(m):
+                        members[n] = m
+                except Exception:
+                    continue
+        except Exception:
+            pass
 
     if not members and indent > 0:
         print_const('{}', space=1, end='\n')
@@ -112,12 +158,12 @@ def print_object(val, indent: int = 0, depth: int = 0):
         print_const(symbol, indent * 2 + 2, end='')
         print_property(_name, 0, '')
         print_const(':', 0)
-        dump(member, 1, indent=indent + 1, end='\n', depth=depth)
+        dump(member, 1, indent=indent + 1, end='\n', depth=depth, visited=visited)
 
     print_const('}', space=indent * 2, end='\n')
 
 
-def print_list(val: list | tuple, space: int = 0, indent: int = 0):
+def print_list(val: list | tuple, space: int = 0, indent: int = 0, depth: int = 0, visited=None):
     print_string(type(val).__name__ + ':' + str(len(val)), space=min(1, indent), end='', wrap=False)
     if len(val) == 0 and indent > 0:
         print_const(' []', space=0, end='\n')
@@ -129,11 +175,11 @@ def print_list(val: list | tuple, space: int = 0, indent: int = 0):
         value = val[item]
         print_key(item, indent * 2 + 2, '')
         print_const('=>', 1)
-        dump(value, 1, indent=indent + 1, end='\n')
+        dump(value, 1, indent=indent + 1, end='\n', depth=depth, visited=visited)
     print_const(']', space=indent * 2, end='\n')
 
 
-def print_dict(val: dict, space=0, indent: int = 0, depth: int = 0):
+def print_dict(val: dict, space=0, indent: int = 0, depth: int = 0, visited=None):
     print_string(type(val).__name__, space=min(1, indent), end='', wrap=False)
     if len(val) == 0 and indent > 0:
         print_const('{}', space=1, end='\n')
@@ -149,7 +195,7 @@ def print_dict(val: dict, space=0, indent: int = 0, depth: int = 0):
     for key, value in val.items():
         print_string(key, indent * 2 + 2, end='')
         print_const(':', 0)
-        dump(value, 1, indent=indent + 1, end='\n', depth=depth)
+        dump(value, 1, indent=indent + 1, end='\n', depth=depth, visited=visited)
     print_const('}', space=indent * 2, end='\n')
 
 
