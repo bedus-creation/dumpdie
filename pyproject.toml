@@ -1,5 +1,5 @@
 [tool.bumpversion]
-current_version = "1.1.0"
+current_version = "1.2.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
@@ -24,7 +24,7 @@ replace = 'version = "{new_version}"'
 name = "dumpdie"
 description="The missing `dd` function in python."
 readme = "README.md"
-version = "1.1.0"
+version = "1.2.0"
 authors = [
     { name = "Bedram Tamang", email = "tmgbedu@gmail.com" },
 ]
