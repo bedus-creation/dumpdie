@@ -1,6 +1,8 @@
-from dumpdie.dd import dump
 from datetime import date, datetime
 from decimal import Decimal
+
+from dumpdie.dd import dump
+
 
 def test_answer():
     assert 1 == 1
@@ -24,7 +26,7 @@ def test_dd_everything():
             "b": [2, 3]
         }
     }
-    dump(data)
+    dump(data, 1)
 
 def test_dd_exception():
     try:

@@ -1,4 +1,5 @@
 import os
+import sys
 import traceback
 import types
 from datetime import date, datetime
@@ -9,7 +10,8 @@ from inspect import getmembers, ismethod
 def print_comment(val, space: int = 0, end=''):
     space = space * ' '
     color = '\033[0;38;5;247m'
-    print(space + color + val + color, end=end)
+    reset = '\033[0m'
+    print(space + color + val + color+reset, end=end)
 
 
 def print_property(val, space: int = 0, end=''):
@@ -21,7 +23,8 @@ def print_property(val, space: int = 0, end=''):
 def print_const(val, space: int = 0, end=''):
     space = space * ' '
     color = '\033[1;038;5;208m'
-    print(space + color + val + color, end=end)
+    reset = '\033[0m'
+    print(space + color + val + color + reset, end=end)
 
 
 def print_string(val: str | bytes, space=0, end='\n', wrap: bool = True):
@@ -55,10 +58,10 @@ def print_dd_info():
     print_comment(f' // {filename}:{str(lineno)}', 0, '\n')
 
 
-def dump(val, space=0, indent: int = 0, end='', depth=0, visited=None):
+def print_var(val, space=0, indent: int = 0, end='', depth=0, visited=None):
     if visited is None:
         visited = set()
-    
+
     depth = depth + 1
     if depth > 15:
         print_string("...", space, os.linesep)
@@ -119,7 +122,7 @@ def print_object(val, indent: int = 0, depth: int = 0, visited=None):
     class_name = type(val).__name__
     print_string(class_name, space=min(1, indent), end='', wrap=False)
     print_const('^', space=0, end='')
-    
+
     # Safely get members, handling objects without __dict__ (like Decimal or those with __slots__)
     members = {}
     if hasattr(val, '__dict__'):
@@ -158,7 +161,7 @@ def print_object(val, indent: int = 0, depth: int = 0, visited=None):
         print_const(symbol, indent * 2 + 2, end='')
         print_property(_name, 0, '')
         print_const(':', 0)
-        dump(member, 1, indent=indent + 1, end='\n', depth=depth, visited=visited)
+        print_var(member, 1, indent=indent + 1, end='\n', depth=depth, visited=visited)
 
     print_const('}', space=indent * 2, end='\n')
 
@@ -175,7 +178,7 @@ def print_list(val: list | tuple, space: int = 0, indent: int = 0, depth: int = 
         value = val[item]
         print_key(item, indent * 2 + 2, '')
         print_const('=>', 1)
-        dump(value, 1, indent=indent + 1, end='\n', depth=depth, visited=visited)
+        print_var(value, 1, indent=indent + 1, end='\n', depth=depth, visited=visited)
     print_const(']', space=indent * 2, end='\n')
 
 
@@ -195,11 +198,16 @@ def print_dict(val: dict, space=0, indent: int = 0, depth: int = 0, visited=None
     for key, value in val.items():
         print_string(key, indent * 2 + 2, end='')
         print_const(':', 0)
-        dump(value, 1, indent=indent + 1, end='\n', depth=depth, visited=visited)
+        print_var(value, 1, indent=indent + 1, end='\n', depth=depth, visited=visited)
     print_const('}', space=indent * 2, end='\n')
 
 
 def dd(*args):
     for arg in args:
-        dump(arg)
-    exit('')
+        print_var(arg)
+
+    sys.exit("")
+
+def dump(*args):
+    for arg in args:
+        print_var(arg)
