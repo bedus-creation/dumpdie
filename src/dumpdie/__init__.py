@@ -1,5 +1,5 @@
 import builtins
-from .dd import dd, dump
+from .dd import dd, print_var
 
 if not hasattr(builtins, 'dd'):
     builtins.dd = dd
